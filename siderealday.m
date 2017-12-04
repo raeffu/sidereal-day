@@ -1,15 +1,21 @@
 function siderealday() 
     clear all; close all; clc; %clear matrices, close figures & clear cmd wnd.
 
-    files = dir('./star-images/*.jpg');
+    files = dir('./new-star-images/selection/*.jpg');
+%     files = dir('./star-images/*.jpg');
     files = files(~ismember({files.name}, {'.', '..'}));
-
+    
     % Start with first imageW
     prev = files(1);
     
     % Load, convert to grayscale and binarize
-    previous = imbinarize(rgb2gray(imread(sprintf('%s\\%s', prev.folder, prev.name))), 'adaptive');
-    numFiles = 7; % the first 8 pictures return good results with SURF
+    gray = rgb2gray(imread(sprintf('%s/%s', prev.folder, prev.name)));
+    gauss_prev = imgaussfilt(gray);
+    previous = imbinarize(gauss_prev, 'adaptive');
+    imshow(previous);
+    pause(1);
+    
+    numFiles = 8; % the first 8 pictures return good results with SURF
     
     % Initialize angles vector
     angles = 0:0:numFiles;
@@ -19,10 +25,15 @@ function siderealday()
         sprintf('%3.2f%%\n', ((i-1)/numFiles)*100)
 
         file = files(i);
-        filename = sprintf('%s\\%s', file.folder, file.name);
+        filename = sprintf('%s/%s', file.folder, file.name);
         
         % Load, convert to grayscale and binarize
-        current = imbinarize(rgb2gray(imread(filename)), 'adaptive');
+        gray = rgb2gray(imread(filename));
+        gauss_current = imgaussfilt(gray);
+        current = imbinarize(gauss_current, 'adaptive');
+        figure;
+        imshow(current);
+        pause(1);
 
         % Find rotation
         angles(i-1) = imrotatefind(previous, current);
@@ -31,16 +42,32 @@ function siderealday()
     end
 
     curve = cumsum(angles);
-
-    time = 0:20:((numFiles - 2) * 20);
+    
+    timeStep = 10; % time between image capture in minutes
+    timeElapsed = timeStep * (numFiles-1);
+    time = 0:timeStep:((numFiles - 2) * timeStep);
+    sprintf('Time elapsed: %d min', timeElapsed)
+    
+    angularVelocity = ((curve(numFiles-1)/360) * 2 * pi) / (timeElapsed*60);
+    actualAngularVelocity = 7.2921e-05;
+    sprintf('Angular velocity: %d rad/s', angularVelocity)
+    sprintf('Actual angular velocity: %d rad/s', actualAngularVelocity)
+    relativeErrorVelocity = abs(actualAngularVelocity - angularVelocity) / actualAngularVelocity;
+    sprintf('Relative error angular velocity: %d%%', relativeErrorVelocity)
+    
     P = polyfit(time, curve, 1);
 
     minutesPerDay = 360/P(1);
+    sprintf('Minutes per day: %d', minutesPerDay)
     secondsPerDay = minutesPerDay * 60;
+    sprintf('Seconds per day: %d', secondsPerDay)
 
     siderealDaySeconds = 86164.099;
+    sprintf('# Seconds Sidereal Day: %d', siderealDaySeconds)
 
     diff = abs(secondsPerDay - siderealDaySeconds);
+    sprintf('Diff: %3.2f seconds', diff)
+    sprintf('Diff: %3.2f minutes', diff/60)
     relativeError = diff / siderealDaySeconds;
     sprintf('Relative error: %3.3f%%', relativeError * 100)
 
