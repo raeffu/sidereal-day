@@ -5,17 +5,17 @@ function siderealday()
 %     files = dir('./star-images/*.jpg');
     files = files(~ismember({files.name}, {'.', '..'}));
     
-    % Start with first imageW
+    % Start with first image
     prev = files(1);
     
     % Load, convert to grayscale and binarize
     gray = rgb2gray(imread(sprintf('%s/%s', prev.folder, prev.name)));
-    gauss_prev = imgaussfilt(gray);
+    gauss_prev = imgaussfilt(gray, 4);
     previous = imbinarize(gauss_prev, 'adaptive');
     imshow(previous);
     pause(1);
     
-    numFiles = 8; % the first 8 pictures return good results with SURF
+    numFiles = 7; % the first 8 pictures return good results with SURF
     
     % Initialize angles vector
     angles = 0:0:numFiles;
@@ -29,7 +29,7 @@ function siderealday()
         
         % Load, convert to grayscale and binarize
         gray = rgb2gray(imread(filename));
-        gauss_current = imgaussfilt(gray);
+        gauss_current = imgaussfilt(gray, 4);
         current = imbinarize(gauss_current, 'adaptive');
         figure;
         imshow(current);
@@ -38,10 +38,11 @@ function siderealday()
         % Find rotation
         angles(i-1) = imrotatefind(previous, current);
 
-        previous = current;
+%         previous = current;
     end
 
-    curve = cumsum(angles);
+%     curve = cumsum(angles);
+    curve = angles;
     
     timeStep = 10; % time between image capture in minutes
     timeElapsed = timeStep * (numFiles-1);
@@ -56,7 +57,12 @@ function siderealday()
     sprintf('Relative error angular velocity: %d%%', relativeErrorVelocity)
     
     P = polyfit(time, curve, 1);
-
+    
+    f = polyval(P,time);
+    plot(time,curve,'-o',time,f,'-')
+    legend('data','linear fit');
+    pause(1);
+    
     minutesPerDay = 360/P(1);
     sprintf('Minutes per day: %d', minutesPerDay)
     secondsPerDay = minutesPerDay * 60;
