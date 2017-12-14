@@ -3,6 +3,9 @@
 ## Segmentierung
 ![segmentierung](./1_segmentation.jpg)
 
+## Animation Rotation
+![animation](./rotation_animation.gif)
+
 ## Feature Matching
 ![match_1](./2_match_1.jpg)
 ![match_2](./2_match_2.jpg)
@@ -12,6 +15,3 @@
 
 ## Fitting
 ![fitting](./3_fitting.jpg)
-
-## Animation Rotation
-![animation](./rotation_animation.gif)
